@@ -181,7 +181,7 @@ async function generateAssessments(questionIdeas, numberOfQuestions) {
       
         // Create a new page with the assessment
         const pageTitle = `Exercise ${i + 1} - MCQ`
-        const pageContent = `{Check it! | assessment}(${result.assessment.taskId})
+        const pageContent = `{Check it!|assessment}(${result.assessment.taskId})
         
 |||guidance
 ## Question Idea
