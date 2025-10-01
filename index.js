@@ -2,44 +2,84 @@
 // (ensures all global variables set in this extension cannot be referenced outside its scope)
 (async function(codioIDE, window) {
  // System prompt for generating question ideas from learning objectives
-const ideaGenerationSystemPrompt = `You are a computer science instructor teaching Cyber security courses with an expertise in drafting question ideas
-for multiple choice assessments. You will be provided with learning objectives and the number of question ideas required. Your task is to create the required 
-number of multiple choice question ideas ordered by difficulty (Beginner, Intermediate, Hard) and topic sequence. 
+const ideaGenerationSystemPrompt = `You are an expert assessment designer specializing in CompTIA Cybersecurity certifications. 
+Your expertise includes deep knowledge of cybersecurity concepts, principles, and practices covered in CompTIA certification exams, 
+as well as best practices in creating effective multiple choice assessment items.
+You will be provided with learning objectives, the number of question ideas required as well as optional additional context or requirements.
+Your task is to create the required number of generate high-quality multiple choice question ideas ordered by difficulty (Beginner, Intermediate, Hard) and topic sequence
 
-**Example Question Ideas:**
-- Create an idea for demonstrating variable naming rules through declaring multiple variables of different types 
-and ensuring proper naming conventions are followed while printing their values. (Easy)
-- Develop an idea for a program that involves declaring, initializing, reassigning, 
-and printing integer variables multiple times to show variable manipulation concepts. (Intermediate)  
-- Design an idea for a program that explores data type handling through arithmetic operations between different numeric types 
-and proper result display. (Hard)
+Start by thinking step-by-step on how you would draft the question ideas in a scratchpad based on everything that's provided to you:
+<scratchpad>
+[Your analysis goes here]
+</scratchpad>
 
-**Output Format:**
+When creating question ideas based on your analysis of the information provided, adhere to these guidelines:
+
+**Question Design Principles**:
+
+- Ensure each question idea clearly assesses a specific learning objective
+- Create questions that test understanding and application, not just memorization
+- Avoid ambiguous or trick questions
+- Ensure questions are clear, concise, and free from bias
+- Consider real-world scenarios and practical application when appropriate
+
+**Difficulty Level Definitions**:
+
+- Beginner: Tests basic recall, definitions, and fundamental concepts; suitable for those new to the topic
+- Intermediate: Tests comprehension, application, and analysis; requires connecting multiple concepts or applying knowledge to scenarios
+- Hard: Tests evaluation, synthesis, and complex problem-solving; involves multi-step reasoning, edge cases, or advanced scenarios
+
+**Organization Requirements**:
+
+- Group question ideas by topic following the sequence of provided learning objectives
+- Within each topic, order questions from Beginner to Intermediate to Hard
+- Clearly label each question idea with its difficulty level and associated learning objective
+
+Provide question ideas as brief descriptions (1-2 sentences) that outline what the question will assess and the general approach, rather than fully developed questions with answer choices.
+
+**Example Question Ideas**:
+
+- Create an idea for identifying the basic definition and purpose of encryption by asking candidates to select the correct description of symmetric encryption from multiple options. (Beginner)
+- Develop an idea for a scenario-based question where candidates must analyze a network security breach and determine which combination of security controls would have prevented the incident. (Intermediate)
+- Design an idea for a complex question that requires candidates to evaluate multiple security frameworks, compare their implementation requirements, and recommend the most appropriate framework for an organization with specific compliance and operational constraints. (Hard)
+
+**Output Format**:
+<scratchpad>
+[Your analysis goes here]
+</scratchpad>
+
 <idea id=1>
-Idea 1: ... (Easy)
+Idea 1: ... (Beginner)
 </idea>
 <idea id=2>
-Idea 2: ... (Intermediate)  
+Idea 2: ... (Intermediate)
 </idea>
 <idea id=3>
 Idea 3: ... (Hard)
 </idea>
-...
-
-**Important Notes:**
-- Do not include ideas for topics not yet covered in the learning objectives.
-- Vary the correct answer positions - some should have the correct answer as option A, some as B, C, or D.
-- Include specific guidance on what the correct answer should be and plausible incorrect options.`
+...`
 
 // User prompt for generating question ideas
-const ideaGenerationPrompt = `
+const ideaGenerationPrompt = `Please generate multiple choice question ideas for a CompTIA Cybersecurity assessment 
+based on the following information:
+
 Here are the learning objectives:
 <learning_objectives>
 {learning_objectives}
 <learning_objectives>
 
+
+Optional Additional Context/Requirements:
+[Any additional content, context, specific requirements, or focus areas for the questions if provided will appear here]
+<additional_context>
+{additional_context}
+</additional_context>
+
+
 Generate exactly {number_of_questions} question ideas based on the learning objectives provided.
 Note:
+- Please organize the question ideas by topic sequence and difficulty level (Beginner, Intermediate, Hard), 
+and ensure each question idea clearly indicates which learning objective it addresses.
 - Ensure there are {number_of_questions} ideas in total, covering a mix of difficulties.
 - Do not include ideas for topics not yet covered in the learning objectives.
 `
@@ -64,7 +104,7 @@ async function onButtonPress() {
     codioIDE.coachBot.showThinkingAnimation()
   
     // Generate question ideas from learning objectives
-    const questionIdeas = await generateQuestionIdeas(userInput.learning_objectives, userInput.number_of_questions)
+    const questionIdeas = await generateQuestionIdeas(userInput.learning_objectives, userInput.number_of_questions, userInput.additional_context)
     
     if (!questionIdeas) {
       codioIDE.coachBot.hideThinkingAnimation()
@@ -73,13 +113,31 @@ async function onButtonPress() {
       return
     }
 
+    // const assessmentsList = await window.codioIDE.guides.assessments.list()
+    // console.log("Assessments", assessmentsList)
+
+    // assessmentsList.forEach(async (assessment) => {
+        
+    //     // Update settings before saving assessment
+    //     assessment.source.showName = false
+    //     assessment.source.isRandomized = true
+    //     assessment.source.showGuidanceAfterResponseOption.passedFrom = 2
+    //     assessment.source.maxAttemptsCount = 0
+
+    //     await window.codioIDE.guides.assessments.save(assessment, [])
+    // })
+    
     codioIDE.coachBot.hideThinkingAnimation()
     codioIDE.coachBot.write("✅ Question ideas generated! Now creating multiple choice assessments...")
+    
+    // log stuff
+    await logContextAndScratchpad(questionIdeas, userInput.learning_objectives, userInput.additional_context)
+    
     // Generate assessments using the question ideas
     await generateAssessments(questionIdeas, userInput.number_of_questions)
     
     // Hide thinking animation and show success message
-    // codioIDE.coachBot.hideThinkingAnimation()
+    codioIDE.coachBot.hideThinkingAnimation()
     codioIDE.coachBot.write(`✅ Successfully generated ${userInput.number_of_questions} multiple choice questions!`)
   
   } catch (error) {
@@ -90,12 +148,15 @@ async function onButtonPress() {
    codioIDE.coachBot.showMenu()
 }
 
+
+// async function activateCodioAssessmentsLinter(assessment) 
+
+
+
 // Function to get user input
 async function getUserInput() {
   try {
-    const context = await codioIDE.coachBot.getContext()
-    console.log("Context:", context)
-
+ 
     // Get learning objectives
     const learningObjectives = await codioIDE.coachBot.input("Please paste the relevant learning objectives:")
     if (!learningObjectives) return null
@@ -104,9 +165,14 @@ async function getUserInput() {
     const numQuestions = await codioIDE.coachBot.input("How many questions would you like to generate")
     if (!numQuestions || isNaN(parseInt(numQuestions))) return null
 
+    // Get optional additional context
+    const additionalContext = await codioIDE.coachBot.input("Please paste any additional context (optional) you would like to provide, otherwise leave this empty and press enter!", " ")
+    if (!additionalContext) return null
+
     return {
       learning_objectives: learningObjectives.trim(),
-      number_of_questions: parseInt(numQuestions)
+      number_of_questions: parseInt(numQuestions),
+      additional_context: additionalContext
     }
   } catch (error) {
     console.error("Error getting user input:", error)
@@ -115,7 +181,7 @@ async function getUserInput() {
 }
 
 // Function to generate question ideas from learning objectives
-async function generateQuestionIdeas(learningObjectives, numberOfQuestions) {
+async function generateQuestionIdeas(learningObjectives, numberOfQuestions, additionalContext) {
   try {
     console.log("Generating question ideas from learning objectives:", learningObjectives)
   
@@ -123,6 +189,7 @@ async function generateQuestionIdeas(learningObjectives, numberOfQuestions) {
     const prompt = ideaGenerationPrompt
       .replace(/{learning_objectives}/g, learningObjectives)
       .replace(/{number_of_questions}/g, numberOfQuestions)
+      .replace(/{additional_context}/g, additionalContext)
   
     console.log("Sending idea generation prompt to LLM...")
   
@@ -151,7 +218,7 @@ async function generateQuestionIdeas(learningObjectives, numberOfQuestions) {
 async function generateAssessments(questionIdeas, numberOfQuestions) {
   try {
     console.log("Generating assessments using question ideas...")
-
+    
     const ideasList = questionIdeas.match(/<idea id=\d+>.*?<\/idea>/gs);
     console.log(`List of question ideeas`, ideasList)
 
@@ -174,7 +241,13 @@ async function generateAssessments(questionIdeas, numberOfQuestions) {
         // Generate the assessment using Codio's assessment API
         const result = await window.codioIDE.guides.assessments.generate(assessmentData)
         console.log('Assessment generated successfully:', result)
-      
+
+        // Update settings before saving assessment
+        result.assessment.source.showName = false
+        result.assessment.source.isRandomized = true
+        result.assessment.source.showGuidanceAfterResponseOption.passedFrom = 2
+        result.assessment.source.maxAttemptsCount = 0
+
         // Save the assessment
         await window.codioIDE.guides.assessments.save(result.assessment, result.files)
         console.log('Assessment saved successfully')
@@ -233,6 +306,45 @@ ${questionIdeas}
     throw error
   }
 }
+
+async function logContextAndScratchpad(questionIdeas, learningObjectives, additionalContext) {
+
+    const scratchpad = extractSubstringFromContent(questionIdeas, startingFrom="<scratchpad>", endingAt="</scratchpad>")
+
+    const randomStringForLogs = `${new Date(Date.now())}`
+
+    const learning_objectives_fp = `.guides/secure/logs/${randomStringForLogs}/learningObjectives.txt`
+    const scratchpad_fp = `.guides/secure/logs/${randomStringForLogs}/scratchpad.txt`
+    const additional_context_fp = `.guides/secure/logs/${randomStringForLogs}/additionalContext.txt`
+
+    try {
+        const lrnObjRes = await window.codioIDE.files.add(learning_objectives_fp, learningObjectives)
+        console.log('add file result', lrnObjRes) 
+
+        const scrRes = await window.codioIDE.files.add(scratchpad_fp, scratchpad)
+        console.log('add file result', scrRes) 
+
+        const addConRes = await window.codioIDE.files.add(additional_context_fp, additionalContext)
+        console.log('add file result', addConRes) 
+
+    } catch (e) {
+        console.error(e)
+    }
+
+
+}
+
+function extractSubstringFromContent(content, startingFrom="", endingAt="") {
+      
+    const startIndex = content.indexOf(`${startingFrom}`) + `${startingFrom}`.length;
+    if (endingAt === "") {
+    return content.slice(start=startIndex)
+    } else {
+    const endIndex = content.indexOf(`${endingAt}`, startIndex);
+    return content.substring(startIndex, endIndex); 
+    }
+}
+
 
 // calling the function immediately by passing the required variables
 })(window.codioIDE, window)
