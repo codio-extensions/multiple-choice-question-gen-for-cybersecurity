@@ -112,20 +112,6 @@ async function onButtonPress() {
       codioIDE.coachBot.showMenu()
       return
     }
-
-    // const assessmentsList = await window.codioIDE.guides.assessments.list()
-    // console.log("Assessments", assessmentsList)
-
-    // assessmentsList.forEach(async (assessment) => {
-        
-    //     // Update settings before saving assessment
-    //     assessment.source.showName = false
-    //     assessment.source.isRandomized = true
-    //     assessment.source.showGuidanceAfterResponseOption.passedFrom = 2
-    //     assessment.source.maxAttemptsCount = 0
-
-    //     await window.codioIDE.guides.assessments.save(assessment, [])
-    // })
     
     codioIDE.coachBot.hideThinkingAnimation()
     codioIDE.coachBot.write("✅ Question ideas generated! Now creating multiple choice assessments...")
@@ -147,11 +133,6 @@ async function onButtonPress() {
   }
    codioIDE.coachBot.showMenu()
 }
-
-
-// async function activateCodioAssessmentsLinter(assessment) 
-
-
 
 // Function to get user input
 async function getUserInput() {
@@ -253,7 +234,7 @@ async function generateAssessments(questionIdeas, numberOfQuestions) {
         console.log('Assessment saved successfully')
       
         // Create a new page with the assessment
-        const pageTitle = `Exercise ${i + 1} - MCQ`
+        const pageTitle = `${toTitleCase(result.assessment.source.name)}`
         const pageContent = `{Check it!|assessment}(${result.assessment.taskId})
         
 |||guidance
@@ -345,6 +326,18 @@ function extractSubstringFromContent(content, startingFrom="", endingAt="") {
     }
 }
 
+function toTitleCase(str) {
+  if (!str) {
+    return ""; // Handle empty or null strings
+  }
+  return str
+    .toLowerCase()
+    .split(' ')
+    .map(function(word) {
+      return word.charAt(0).toUpperCase() + word.slice(1);
+    })
+    .join(' ');
+}
 
 // calling the function immediately by passing the required variables
 })(window.codioIDE, window)
