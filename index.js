@@ -183,7 +183,7 @@ async function generateQuestionIdeas(learningObjectives, numberOfQuestions, addi
           "content": prompt,
         }]
       },
-      { stream: false, preventMenu: true, modelSettings: {"maxTokens": 2000} }
+      { stream: false, preventMenu: true, modelSettings: {"maxTokens": 4096} }
     )
   
     console.log("LLM Response for ideas:", result.result)
