@@ -48,6 +48,7 @@ Provide question ideas as brief descriptions (1-2 sentences) that outline what t
 [Your analysis goes here]
 </scratchpad>
 
+<ideas>
 <idea id=1>
 Idea 1: ... (Beginner)
 </idea>
@@ -57,7 +58,8 @@ Idea 2: ... (Intermediate)
 <idea id=3>
 Idea 3: ... (Hard)
 </idea>
-...`
+...
+</ideas>`
 
 // User prompt for generating question ideas
 const ideaGenerationPrompt = `Please generate multiple choice question ideas for a CompTIA Cybersecurity assessment 
@@ -291,13 +293,15 @@ ${questionIdeas}
 async function logContextAndScratchpad(questionIdeas, learningObjectives, additionalContext) {
 
     const scratchpad = extractSubstringFromContent(questionIdeas, startingFrom="<scratchpad>", endingAt="</scratchpad>")
-
-    const randomStringForLogs = `${new Date(Date.now())}`
+    const allIdeas = extractSubstringFromContent(questionIdeas, startingFrom="<ideas>", endingAt="</ideas>")
+    
+ const randomStringForLogs = `${new Date(Date.now())}`
 
     const learning_objectives_fp = `.guides/secure/logs/${randomStringForLogs}/learningObjectives.txt`
     const scratchpad_fp = `.guides/secure/logs/${randomStringForLogs}/scratchpad.txt`
     const additional_context_fp = `.guides/secure/logs/${randomStringForLogs}/additionalContext.txt`
-
+    const all_ideas_fp = `.guides/secure/logs/${randomStringForLogs}/allIdeas.txt`
+  
     try {
         const lrnObjRes = await window.codioIDE.files.add(learning_objectives_fp, learningObjectives)
         console.log('add file result', lrnObjRes) 
@@ -308,6 +312,8 @@ async function logContextAndScratchpad(questionIdeas, learningObjectives, additi
         const addConRes = await window.codioIDE.files.add(additional_context_fp, additionalContext)
         console.log('add file result', addConRes) 
 
+        const addIdeasRes = await window.codioIDE.files.add(all_ideas_fp, allIdeas)
+        console.log('add file result', addIdeasRes) 
     } catch (e) {
         console.error(e)
     }
